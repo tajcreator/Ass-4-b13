@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* smooth transitions */
+    /* transitions */
     .tab-btn.active {
       background-color: #2563eb;
       color: white;
@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <!--  (dashboard counts) -->
+    <!--  dashboard counts -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
       <!-- total jobs -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex items-center">
@@ -88,14 +88,252 @@
       </div>
 
       <!-- jobs grid (cards injected here) -->
-      <div id="jobs-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div id="jobs-container" class="grid grid-cols-1 gap-5 mx-auto max-w-4xl ">
        
       </div>
     </div>
 
     
   </main>
+ <script>
+    (function() {
+      // ---------- REAL JOB DATA ---------
+      const initialJobs = [
+        {
+          id: 'job1',
+          companyName: 'Mobile First Corp',
+          position: 'React Native Developer',
+          Data: 'Remote • Full-time • $130,000 - $175,000',
+          description: 'Build payment UIs with React & TypeScript. Collaborate with design system team.',
+          status: null   
+        },
+        {
+          id: 'job2',
+          companyName: 'WebFlow Agency',
+          position: 'Web Designer & Developer',
+          Data: 'Los Angeles, CA • Part-time • $80,000 - $120,000',
+          description: 'Create stunning web experiences for high-profile clients. Must have portfolio and experience with modern web design trends.',
+          status: null
+        },
+        {
+          id: 'job3',
+          companyName: 'DataViz Solutions',
+          position: 'Data Visualization Specialist',
+          Data: 'Boston, MA • Full-time • $125,000 - $165,000',
+          
+          description: 'Transform complex data into compelling visualizations. Required skills: D3.js, React, and strong analytical thinking.',
+          status: null
+        },
+        {
+          id: 'job4',
+          companyName: 'CloudFirst Inc',
+          position: 'Backend Developer',
+          Data: 'Seattle, WA • Full-time • $140,000 - $190,000',
+           
+          description: 'Design and maintain scalable backend systems using Python and AWS. Work with modern DevOps practices and cloud infrastructure.',
+          status: null
+        },
+        {
+          id: 'job5',
+          companyName: 'Innovation Labs',
+          position: 'UI/UX Engineer',
+          Data: 'Austin, TX • Full-time • $110,000 - $150,000',
+         
+          description: 'Create beautiful and functional user interfaces for our suite of products. Strong design skills and frontend development expertise required.',
+          status: null
+        },
+        {
+          id: 'job6',
+          companyName: 'MegaCorp Solutions',
+          position: 'JavaScript Developer',
+          Data: 'New York, NY • Full-time • $130,000 - $170,00',
+          
+          description: 'Build enterprise applications with JavaScript and modern frameworks. We offer competitive compensation, health insurance, and professional development opportunities.',
+          status: null
+        },
+        {
+          id: 'job7',
+          companyName: 'StartupXYZ',
+          position: 'Full Stack Engineer',
+          Data: 'Remote • Full-time • $120,000 - $160,000',
+          
+          description: 'Join our fast-growing startup and work on our core platform. Experience with Node.js and React required. Great benefits and equity package included.',
+          status: null
+        },
+        {
+          id: 'job8',
+          companyName: 'TechCorp Industries',
+          position: 'Senior Frontend Developer',
+          Data: 'San Francisco, CA • Full-time • $130,000 - $175,000',
+         
+          description: 'Build management dashboard for bare-metal servers using React and WebSockets.',
+          status: null
+        }
+      ];
 
+      // state
+      let jobs = JSON.parse(JSON.stringify(initialJobs));   
+      let currentTab = 'all';    
+
+      // DOM elements
+      const jobsContainer = document.getElementById('jobs-container');
+      const tabCountBadge = document.getElementById('tab-count-badge');
+      const totalJobsSpan = document.getElementById('total-jobs-count');
+      const interviewCountSpan = document.getElementById('interview-count');
+      const rejectedCountSpan = document.getElementById('rejected-count');
+      const tabButtons = document.querySelectorAll('.tab-btn');
+
+      // ---------- helper: filter jobs by current tab ----------
+      function getFilteredJobs() {
+        if (currentTab === 'all') {
+          return jobs.filter(job => job.status === null);   
+        } else if (currentTab === 'interview') {
+          return jobs.filter(job => job.status === 'interview');
+        } else { // rejected
+          return jobs.filter(job => job.status === 'rejected');
+        }
+      }
+
+      // ---------- update stats ----------
+      function updateDashboardStats() {
+        const total = jobs.length;
+        const interview = jobs.filter(j => j.status === 'interview').length;
+        const rejected = jobs.filter(j => j.status === 'rejected').length;
+
+        totalJobsSpan.textContent = total;
+        interviewCountSpan.textContent = interview;
+        rejectedCountSpan.textContent = rejected;
+      }
+
+      // ---------- render jobs based on current tab ----------
+      function renderJobs() {
+        const filtered = getFilteredJobs();
+        // update tab count (right side)
+        tabCountBadge.textContent = filtered.length + ' job' + (filtered.length !== 1 ? 's' : '');
+
+        if (filtered.length === 0) {
+          // empty state with icon and message
+          jobsContainer.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-12 px-4">
+              <i class="fa-solid fa-folder-open text-5xl text-slate-300 mb-4"></i>
+              <h3 class="text-lg font-semibold text-slate-700">No jobs available</h3>
+              <p class="text-slate-500 text-sm mt-1">There are no jobs in this category.</p>
+            </div>
+          `;
+        } else {
+          // build cards
+          let htmlStr = '';
+          filtered.forEach(job => {
+            // status for data attr (optional)
+            const statusAttr = job.status ? job.status : 'unassigned';
+            htmlStr += `
+              <div class="bg-slate-50 rounded-xl border border-slate-200 p-5 card-transition hover:shadow-md flex flex-col" data-job-id="${job.id}" data-status="${statusAttr}">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-bold text-lg text-slate-800">${job.companyName}</h3>
+                    <p class="text-slate-600 font-medium mt-0.5">${job.position}</p>
+                  </div>
+                  <button class="delete-btn text-slate-400 hover:text-rose-600 transition p-1" data-id="${job.id}" title="delete job">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+
+                <div class="mt-3 space-y-1 text-sm">
+                  <p class="flex items-center text-slate-600"><i class="fa-regular fa-building w-5"></i> ${job.Data}</p>
+                
+                </div>
+
+                <p class="text-sm text-slate-500 mt-3 border-t border-slate-200 pt-3 line-clamp-2">${job.description}</p>
+
+                <div class="flex items-center flex gap-3 mt-4  ">
+                  <button class="interview-btn  bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-medium py-3 px-2 rounded-md transition border border-emerald-200" data-id="${job.id}">
+                    <i class="fa-regular fa-thumbs-up mr-1"></i> Interview
+                  </button>
+                  <button class="rejected-btn bg-rose-50 hover:bg-rose-100 text-rose-700 text-sm font-medium py-2  px-2 rounded-md  transition border border-rose-200" data-id="${job.id}">
+                    <i class="fa-regular fa-thumbs-down mr-1"></i> Rejected
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          jobsContainer.innerHTML = htmlStr;
+        }
+
+        // always update dashboard stats after render
+        updateDashboardStats();
+      }
+
+      // ---------- change active tab style ----------
+      function setActiveTab(tabId) {
+        tabButtons.forEach(btn => {
+          const btnTab = btn.dataset.tab;
+          if (btnTab === tabId) {
+            btn.classList.add('active', 'bg-blue-600', 'text-white', 'border-transparent');
+            btn.classList.remove('border-slate-300', 'text-slate-700', 'hover:bg-slate-100');
+          } else {
+            btn.classList.remove('active', 'bg-blue-600', 'text-white', 'border-transparent');
+            btn.classList.add('border', 'border-slate-300', 'text-slate-700', 'hover:bg-slate-100');
+          }
+        });
+      }
+
+      // ---------- event ----------
+      jobsContainer.addEventListener('click', (e) => {
+         
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        const jobId = button.dataset.id;
+        if (!jobId) return;   
+
+        const job = jobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        // --- INTERVIEW button ---
+        if (button.classList.contains('interview-btn')) {
+           
+          if (job.status !== 'interview') {
+            job.status = 'interview';
+            renderJobs();   
+          }
+          
+        }
+
+        // --- REJECTED button ---
+        else if (button.classList.contains('rejected-btn')) {
+          if (job.status !== 'rejected') {
+            job.status = 'rejected';
+            renderJobs();
+          }
+        }
+
+        // --- DELETE button ---
+        else if (button.classList.contains('delete-btn')) {
+          // remove job from array
+          jobs = jobs.filter(j => j.id !== jobId);
+          renderJobs(); 
+        }
+      });
+
+      // ---------- tab switching ----------
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const tabId = btn.dataset.tab;    
+          if (!tabId) return;
+          currentTab = tabId;
+          setActiveTab(tabId);
+          renderJobs();
+        });
+      });
+
+      // ---------- initial render ----------
+      renderJobs();
+
+
+      
+
+    })();
+  </script>
  
 
  
